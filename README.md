@@ -11,7 +11,17 @@ and automatically:
 - runs a time series model
 - returns predictions + explanation
 
----
+## Why is this agentic?
+
+This system demonstrates agent-like behavior by:
+
+- Interpreting natural language prompts
+- Dynamically selecting forecasting models (Theta / ExponentialSmoothing)
+- Extracting forecasting horizon from text
+- Generating human-readable explanations
+
+Unlike static pipelines, this system adapts its behavior based on user intent.
+
 
 ## 🚀 Features
 
