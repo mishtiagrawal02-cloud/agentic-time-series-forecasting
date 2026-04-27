@@ -4,6 +4,7 @@ from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
+from sklearn.metrics import mean_absolute_error
 
 
 class AgenticForecaster:
@@ -36,11 +37,39 @@ class AgenticForecaster:
         else:
             return "stable"
 
+    def _evaluate_models(self, steps):
+        models = {
+            "Theta": ThetaForecaster(sp=12),
+            "Naive": NaiveForecaster(strategy="last"),
+            "ExpSmoothing": ExponentialSmoothing(),
+        }
+
+        results = {}
+
+        for name, model in models.items():
+            model.fit(self.data)
+
+            fh = ForecastingHorizon(list(range(1, steps + 1)), is_relative=True)
+            preds = model.predict(fh)
+
+            actual = self.data.iloc[-steps:]
+            preds = preds.iloc[:len(actual)]
+
+            error = mean_absolute_error(actual, preds)
+            results[name] = (model, error)
+
+        best_model_name = min(results, key=lambda x: results[x][1])
+        return results[best_model_name][0], best_model_name, results
+
     def predict_from_prompt(self, prompt):
         steps = self._extract_steps(prompt)
 
         # Agent decision
-        self.model = self._select_model(prompt)
+        if "best" in prompt.lower() or "compare" in prompt.lower():
+            self.model, best_name, results = self._evaluate_models(steps)
+        else:
+            self.model = self._select_model(prompt)
+
         self.model.fit(self.data)
 
         fh = ForecastingHorizon(list(range(1, steps + 1)), is_relative=True)
@@ -50,12 +79,18 @@ class AgenticForecaster:
         if "explain" in prompt.lower() or "trend" in prompt.lower():
             trend = self._analyze_trend(preds)
 
-            explanation = (
-                f"Using {self.model.__class__.__name__}, "
-                f"the model predicts values from {preds.iloc[0]:.2f} "
-                f"to {preds.iloc[-1]:.2f}, indicating a {trend} trend "
-                f"compared to the last observed value {self.data.iloc[-1]:.2f}."
-            )
+            if "best" in prompt.lower() or "compare" in prompt.lower():
+                explanation = (
+                    f"Compared multiple models and selected {best_name} as best "
+                    f"based on lowest forecasting error."
+                )
+            else:
+                explanation = (
+                    f"Using {self.model.__class__.__name__}, "
+                    f"the model predicts values from {preds.iloc[0]:.2f} "
+                    f"to {preds.iloc[-1]:.2f}, indicating a {trend} trend "
+                    f"compared to the last observed value {self.data.iloc[-1]:.2f}."
+                )
 
         return preds, explanation
 
@@ -66,6 +101,5 @@ if __name__ == "__main__":
     prompt = input("Enter your prompt: ")
     preds, explanation = agent.predict_from_prompt(prompt)
 
-    print("Prompt:", prompt)
     print("\nPredictions:\n", preds)
     print("\nExplanation:", explanation)
