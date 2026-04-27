@@ -1,38 +1,63 @@
 # Agentic Time Series Forecasting (sktime)
 
-This project demonstrates a simple **agentic forecasting system** using `sktime`.
+An intelligent **agentic forecasting system** built using `sktime` that understands natural language prompts, selects models, compares them, and explains predictions.
 
-It allows users to give natural language prompts like:
+---
 
-"Predict next 6 months and explain trend"
+## 🚀 What this does
 
-and automatically:
-- extracts forecasting horizon
-- runs a time series model
-- returns predictions + explanation
+You can give prompts like:
 
-## Why is this agentic?
+> "Predict next 6 months using best model and explain trend"
 
-This system demonstrates agent-like behavior by:
+And the system will:
+- Parse the request
+- Extract forecasting horizon
+- Select or compare models
+- Generate predictions
+- Explain results
 
-- Interpreting natural language prompts
-- Dynamically selecting forecasting models (Theta / ExponentialSmoothing)
-- Extracting forecasting horizon from text
-- Generating human-readable explanations
+---
 
-Unlike static pipelines, this system adapts its behavior based on user intent.
+## 🧠 Why is this agentic?
 
+This system demonstrates **agent-like decision making**:
 
-## 🚀 Features
+- Interprets natural language prompts
+- Dynamically selects forecasting models
+- Compares multiple models using error metrics (MAE)
+- Chooses the best-performing model
+- Generates human-readable explanations
+
+👉 Unlike static pipelines, this system **adapts based on user intent**
+
+---
+
+## ✨ Features
 
 - Prompt-based forecasting
-- Automatic step extraction from text
+- Model selection (Theta / Naive / Exponential Smoothing)
+- Model comparison (automatic best model selection)
+- Error-based evaluation (MAE)
 - Trend explanation
-- Built using `sktime`
+- Supports natural language:
+  - "next 6 months"
+  - "next year"
+  - "compare models"
+
+---
+
+## 📊 Example
+
+### Input
+
+
+### Output
+
 
 ---
 
 ## 📦 Installation
 
 ```bash
-pip install sktime statsmodels pandas
+pip install -r requirements.txt

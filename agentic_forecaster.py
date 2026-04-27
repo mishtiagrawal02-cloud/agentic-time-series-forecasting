@@ -12,6 +12,14 @@ class AgenticForecaster:
         self.data = load_airline()
 
     def _extract_steps(self, prompt):
+        prompt = prompt.lower()
+        if "year" in prompt:
+            return 12
+        elif "quarter" in prompt:
+            return 3
+        elif "month" in prompt:
+            match = re.search(r"\d+", prompt)
+            return int(match.group()) if match else 3
         match = re.search(r"\d+", prompt)
         return int(match.group()) if match else 3
 
@@ -76,13 +84,21 @@ class AgenticForecaster:
         preds = self.model.predict(fh)
 
         explanation = None
-        if "explain" in prompt.lower() or "trend" in prompt.lower():
+        if (
+            "explain" in prompt.lower()
+            or "trend" in prompt.lower()
+            or "best" in prompt.lower()
+            or "compare" in prompt.lower()
+        ):
             trend = self._analyze_trend(preds)
 
             if "best" in prompt.lower() or "compare" in prompt.lower():
+                errors_text = ", ".join(
+                    [f"{name}: {round(err, 2)}" for name, (_, err) in results.items()]
+                )
                 explanation = (
-                    f"Compared multiple models and selected {best_name} as best "
-                    f"based on lowest forecasting error."
+                    f"Compared models → {errors_text}. "
+                    f"Selected {best_name} as best based on lowest error."
                 )
             else:
                 explanation = (
@@ -102,4 +118,5 @@ if __name__ == "__main__":
     preds, explanation = agent.predict_from_prompt(prompt)
 
     print("\nPredictions:\n", preds)
-    print("\nExplanation:", explanation)
+    if explanation:
+        print("\nExplanation:", explanation)
