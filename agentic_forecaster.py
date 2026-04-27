@@ -1,22 +1,28 @@
-"""
-Agentic forecaster: class-based prompt-driven forecasting using sktime.
-"""
-
 import re
 from sktime.datasets import load_airline
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.base import ForecastingHorizon
 
 
 class AgenticForecaster:
     def __init__(self):
-        self.model = ThetaForecaster(sp=12)
         self.data = load_airline()
-        self.model.fit(self.data)
 
     def _extract_steps(self, prompt):
         match = re.search(r"\d+", prompt)
         return int(match.group()) if match else 3
+
+    def _select_model(self, prompt):
+        prompt = prompt.lower()
+
+        if "smooth" in prompt:
+            return ExponentialSmoothing()
+
+        elif "fast" in prompt:
+            return ThetaForecaster(sp=12)
+
+        return ThetaForecaster(sp=12)
 
     def _analyze_trend(self, predictions):
         if predictions.iloc[-1] > self.data.iloc[-1]:
@@ -26,6 +32,10 @@ class AgenticForecaster:
     def predict_from_prompt(self, prompt):
         steps = self._extract_steps(prompt)
 
+        # Agent decision
+        self.model = self._select_model(prompt)
+        self.model.fit(self.data)
+
         fh = ForecastingHorizon(list(range(1, steps + 1)), is_relative=True)
         preds = self.model.predict(fh)
 
@@ -33,14 +43,13 @@ class AgenticForecaster:
         if "explain" in prompt.lower() or "trend" in prompt.lower():
             trend = self._analyze_trend(preds)
             explanation = (
-                f"The forecast suggests an overall {trend} trend "
-                f"for the next {steps} steps."
+                f"Using {self.model.__class__.__name__}, "
+                f"the forecast for {steps} steps shows a {trend} trend."
             )
 
         return preds, explanation
 
 
-# Example usage
 if __name__ == "__main__":
     agent = AgenticForecaster()
 
