@@ -3,6 +3,7 @@ from sktime.datasets import load_airline
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.naive import NaiveForecaster
 
 
 class AgenticForecaster:
@@ -19,6 +20,9 @@ class AgenticForecaster:
         if "smooth" in prompt:
             return ExponentialSmoothing()
 
+        elif "naive" in prompt:
+            return NaiveForecaster(strategy="last")
+
         elif "fast" in prompt:
             return ThetaForecaster(sp=12)
 
@@ -27,7 +31,10 @@ class AgenticForecaster:
     def _analyze_trend(self, predictions):
         if predictions.iloc[-1] > self.data.iloc[-1]:
             return "increasing"
-        return "decreasing or stable"
+        elif predictions.iloc[-1] < self.data.iloc[-1]:
+            return "decreasing"
+        else:
+            return "stable"
 
     def predict_from_prompt(self, prompt):
         steps = self._extract_steps(prompt)
@@ -42,9 +49,12 @@ class AgenticForecaster:
         explanation = None
         if "explain" in prompt.lower() or "trend" in prompt.lower():
             trend = self._analyze_trend(preds)
+
             explanation = (
                 f"Using {self.model.__class__.__name__}, "
-                f"the forecast for {steps} steps shows a {trend} trend."
+                f"the model predicts values from {preds.iloc[0]:.2f} "
+                f"to {preds.iloc[-1]:.2f}, indicating a {trend} trend "
+                f"compared to the last observed value {self.data.iloc[-1]:.2f}."
             )
 
         return preds, explanation
